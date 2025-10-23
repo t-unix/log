@@ -20,7 +20,7 @@ const isProviderConfigured = (provider: string): boolean => {
 }
 
 // Demo/Development login endpoint
-authRouter.post('/demo-login', async (req, res) => {
+authRouter.post('/demo-login', async (_req, res) => {
   try {
     // Only allow in development mode
     if (process.env.NODE_ENV === 'production') {
@@ -75,24 +75,27 @@ authRouter.post('/demo-login', async (req, res) => {
 })
 
 // GitHub OAuth
-authRouter.get('/github', (req, res, next) => {
+authRouter.get('/github', (req, res, next): void => {
   if (!isProviderConfigured('github')) {
-    return res.status(503).json({
+    res.status(503).json({
       error: 'GitHub authentication is not configured',
       hint: 'Please set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables'
     })
+    return
   }
   passport.authenticate('github', { scope: ['user:email'] })(req, res, next)
 })
 
-authRouter.get('/github/callback', (req, res, next) => {
+authRouter.get('/github/callback', (req, res, next): void => {
   if (!isProviderConfigured('github')) {
-    return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=github_not_configured`)
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=github_not_configured`)
+    return
   }
 
-  passport.authenticate('github', { failureRedirect: '/login' }, (err, user) => {
+  passport.authenticate('github', { failureRedirect: '/login' }, (err: any, user: any) => {
     if (err || !user) {
-      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`)
+      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`)
+      return
     }
     const token = generateToken(user)
     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}?token=${token}`)
@@ -100,24 +103,27 @@ authRouter.get('/github/callback', (req, res, next) => {
 })
 
 // Google OAuth
-authRouter.get('/google', (req, res, next) => {
+authRouter.get('/google', (req, res, next): void => {
   if (!isProviderConfigured('google')) {
-    return res.status(503).json({
+    res.status(503).json({
       error: 'Google authentication is not configured',
       hint: 'Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables'
     })
+    return
   }
   passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next)
 })
 
-authRouter.get('/google/callback', (req, res, next) => {
+authRouter.get('/google/callback', (req, res, next): void => {
   if (!isProviderConfigured('google')) {
-    return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=google_not_configured`)
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=google_not_configured`)
+    return
   }
 
-  passport.authenticate('google', { failureRedirect: '/login' }, (err, user) => {
+  passport.authenticate('google', { failureRedirect: '/login' }, (err: any, user: any) => {
     if (err || !user) {
-      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`)
+      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`)
+      return
     }
     const token = generateToken(user)
     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}?token=${token}`)
@@ -125,28 +131,30 @@ authRouter.get('/google/callback', (req, res, next) => {
 })
 
 // Apple OAuth
-authRouter.get('/apple', (req, res, next) => {
+authRouter.get('/apple', (_req, res, _next): void => {
   if (!isProviderConfigured('apple')) {
-    return res.status(503).json({
+    res.status(503).json({
       error: 'Apple authentication is not configured',
       hint: 'Please set APPLE_CLIENT_ID and APPLE_CLIENT_SECRET environment variables'
     })
+    return
   }
   // Apple strategy would be used here if configured
   res.status(503).json({ error: 'Apple authentication is configured but strategy needs implementation' })
 })
 
-authRouter.get('/apple/callback', (req, res) => {
+authRouter.get('/apple/callback', (_req, res): void => {
   res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=apple_not_implemented`)
 })
 
 // Get current user
-authRouter.get('/me', authenticateToken, async (req: AuthRequest, res) => {
+authRouter.get('/me', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
   try {
     const result = await query('SELECT id, email, name, avatar, role, organization_id FROM users WHERE id = $1', [req.user!.id])
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' })
+      res.status(404).json({ error: 'User not found' })
+      return
     }
 
     res.json(result.rows[0])

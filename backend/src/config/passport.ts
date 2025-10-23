@@ -42,7 +42,7 @@ export function setupPassport(app: Express) {
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
       callbackURL: `${process.env.APP_URL || 'http://localhost:3001'}/api/auth/github/callback`
     },
-    async (accessToken: string, refreshToken: string, profile: any, done: any) => {
+    async (_accessToken: string, _refreshToken: string, profile: any, done: any) => {
       try {
         const user = await findOrCreateUser({
           provider: 'github',
@@ -65,7 +65,7 @@ export function setupPassport(app: Express) {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: `${process.env.APP_URL || 'http://localhost:3001'}/api/auth/google/callback`
     },
-    async (accessToken: string, refreshToken: string, profile: any, done: any) => {
+    async (_accessToken: string, _refreshToken: string, profile: any, done: any) => {
       try {
         const user = await findOrCreateUser({
           provider: 'google',

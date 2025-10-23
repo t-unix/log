@@ -14,20 +14,21 @@ export class AppError extends Error {
 
 export function errorHandler(
   err: Error | AppError,
-  req: Request,
+  _req: Request,
   res: Response,
-  next: NextFunction
-) {
+  _next: NextFunction
+): void {
   console.error('Error:', err)
 
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
+    res.status(err.statusCode).json({
       error: err.message
     })
+    return
   }
 
   // Default error
-  return res.status(500).json({
+  res.status(500).json({
     error: 'Internal server error'
   })
 }
