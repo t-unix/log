@@ -1,0 +1,22 @@
+{
+  "name": "log-asset-management",
+  "version": "1.0.0",
+  "description": "A simple, open-source asset management application for organizations",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=frontend & npm run dev --workspace=backend",
+    "build": "npm run build --workspace=frontend && npm run build --workspace=backend",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
+  "keywords": [
+    "asset-management",
+    "typescript",
+    "vue"
+  ],
+  "license": "MIT"
+}
