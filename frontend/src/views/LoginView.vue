@@ -16,6 +16,23 @@
             Choose your preferred authentication provider to access your organization's assets.
           </p>
 
+          <div v-if="error" class="error-message">
+            {{ error }}
+          </div>
+
+          <div v-if="isDevelopment" class="demo-section">
+            <button @click="handleDemoLogin" class="demo-button" :disabled="loading">
+              <span v-if="loading" class="spinner"></span>
+              <span v-else>🚀</span>
+              {{ loading ? 'Logging in...' : 'Demo Login (Development Only)' }}
+            </button>
+            <p class="demo-hint">Use this to test the app without OAuth credentials</p>
+          </div>
+
+          <div v-if="isDevelopment" class="divider">
+            <span>or continue with</span>
+          </div>
+
           <div class="oauth-buttons">
             <button @click="handleLogin('github')" class="oauth-button oauth-github">
               <svg class="oauth-icon" viewBox="0 0 24 24" fill="currentColor">
@@ -52,12 +69,79 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import axios from 'axios'
 
 const authStore = useAuthStore()
+const router = useRouter()
+const route = useRoute()
+
+const error = ref<string | null>(null)
+const loading = ref(false)
+const isDevelopment = ref(import.meta.env.DEV)
+
+onMounted(() => {
+  // Check for OAuth errors in query params
+  const errorParam = route.query.error as string
+  if (errorParam) {
+    switch (errorParam) {
+      case 'github_not_configured':
+        error.value = 'GitHub authentication is not configured. Please use demo login or configure OAuth.'
+        break
+      case 'google_not_configured':
+        error.value = 'Google authentication is not configured. Please use demo login or configure OAuth.'
+        break
+      case 'apple_not_implemented':
+        error.value = 'Apple authentication is not yet implemented. Please use demo login or another provider.'
+        break
+      case 'auth_failed':
+        error.value = 'Authentication failed. Please try again.'
+        break
+      default:
+        error.value = 'An error occurred during authentication.'
+    }
+  }
+
+  // Check for token in query params (OAuth callback)
+  const token = route.query.token as string
+  if (token) {
+    const userData = {
+      id: '',
+      email: '',
+      name: '',
+      role: '',
+      organizationId: ''
+    }
+    authStore.setAuth(token, userData)
+    authStore.checkAuth().then(() => {
+      router.push('/')
+    })
+  }
+})
 
 function handleLogin(provider: string) {
+  error.value = null
   authStore.login(provider)
+}
+
+async function handleDemoLogin() {
+  loading.value = true
+  error.value = null
+
+  try {
+    const response = await axios.post('/api/auth/demo-login')
+    const { token, user } = response.data
+
+    authStore.setAuth(token, user)
+    router.push('/')
+  } catch (err: any) {
+    console.error('Demo login error:', err)
+    error.value = err.response?.data?.error || 'Demo login failed. Please try again.'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -184,6 +268,74 @@ function handleLogin(provider: string) {
   font-size: 0.75rem;
   color: var(--text-light);
   line-height: 1.5;
+}
+
+.error-message {
+  padding: 1rem;
+  background-color: #FEE2E2;
+  color: #DC2626;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.demo-section {
+  margin-bottom: 1.5rem;
+}
+
+.demo-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.5rem;
+  border: 2px solid var(--primary-color);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.demo-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.demo-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.demo-hint {
+  margin-top: 0.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-light);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.divider span {
+  padding: 0 1rem;
 }
 
 @media (max-width: 768px) {

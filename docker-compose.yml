@@ -28,7 +28,7 @@ services:
       dockerfile: Dockerfile
     container_name: log-backend
     environment:
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       APP_PORT: 3001
       APP_URL: http://localhost:3001
       FRONTEND_URL: http://localhost:3000
