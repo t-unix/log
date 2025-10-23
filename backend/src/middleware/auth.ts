@@ -3,14 +3,7 @@ import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 
-export interface AuthRequest extends Request {
-  user?: {
-    id: string
-    email: string
-    organizationId: string
-    role: string
-  }
-}
+export type AuthRequest = Request
 
 export function authenticateToken(req: AuthRequest, res: Response, next: NextFunction): void {
   const authHeader = req.headers['authorization']

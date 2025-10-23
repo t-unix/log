@@ -20,11 +20,12 @@ const isProviderConfigured = (provider: string): boolean => {
 }
 
 // Demo/Development login endpoint
-authRouter.post('/demo-login', async (_req, res) => {
+authRouter.post('/demo-login', async (_req, res): Promise<void> => {
   try {
     // Only allow in development mode
     if (process.env.NODE_ENV === 'production') {
-      return res.status(403).json({ error: 'Demo login is not available in production' })
+      res.status(403).json({ error: 'Demo login is not available in production' })
+      return
     }
 
     // Find or create demo user
