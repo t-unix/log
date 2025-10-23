@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "log-asset-management.fullname" . }}-frontend
+  labels:
+    {{- include "log-asset-management.labels" . | nindent 4 }}
+    component: frontend
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.frontend.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "log-asset-management.selectorLabels" . | nindent 4 }}
+    component: frontend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "log-asset-management.fullname" . }}-backend
+  labels:
+    {{- include "log-asset-management.labels" . | nindent 4 }}
+    component: backend
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.backend.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "log-asset-management.selectorLabels" . | nindent 4 }}
+    component: backend

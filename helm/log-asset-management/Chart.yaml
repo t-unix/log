@@ -1,0 +1,14 @@
+apiVersion: v2
+name: log-asset-management
+description: A Helm chart for Log Asset Management application
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - asset-management
+  - inventory
+  - vue
+  - typescript
+maintainers:
+  - name: Log Team
+    email: team@example.com
