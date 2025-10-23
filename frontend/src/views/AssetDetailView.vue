@@ -101,7 +101,7 @@
               @change="handlePhotoUpload"
               class="photo-input"
             >
-            <button @click="$refs.photoInput?.click()" class="btn btn-primary">
+            <button @click="photoInput?.click()" class="btn btn-primary">
               📷 Choose Photo
             </button>
             <p class="photo-hint">Select from gallery or take a new photo</p>
