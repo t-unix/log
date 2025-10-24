@@ -86,20 +86,20 @@ CREATE TABLE IF NOT EXISTS logbook_entries (
 );
 
 -- Create indexes
-CREATE INDEX idx_users_organization ON users(organization_id);
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_assets_organization ON assets(organization_id);
-CREATE INDEX idx_assets_status ON assets(status);
-CREATE INDEX idx_loans_organization ON loans(organization_id);
-CREATE INDEX idx_loans_asset ON loans(asset_id);
-CREATE INDEX idx_loans_user ON loans(user_id);
-CREATE INDEX idx_loans_status ON loans(status);
-CREATE INDEX idx_issues_organization ON issues(organization_id);
-CREATE INDEX idx_issues_asset ON issues(asset_id);
-CREATE INDEX idx_issues_status ON issues(status);
-CREATE INDEX idx_logbook_organization ON logbook_entries(organization_id);
-CREATE INDEX idx_logbook_type ON logbook_entries(type);
-CREATE INDEX idx_logbook_created ON logbook_entries(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_users_organization ON users(organization_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_assets_organization ON assets(organization_id);
+CREATE INDEX IF NOT EXISTS idx_assets_status ON assets(status);
+CREATE INDEX IF NOT EXISTS idx_loans_organization ON loans(organization_id);
+CREATE INDEX IF NOT EXISTS idx_loans_asset ON loans(asset_id);
+CREATE INDEX IF NOT EXISTS idx_loans_user ON loans(user_id);
+CREATE INDEX IF NOT EXISTS idx_loans_status ON loans(status);
+CREATE INDEX IF NOT EXISTS idx_issues_organization ON issues(organization_id);
+CREATE INDEX IF NOT EXISTS idx_issues_asset ON issues(asset_id);
+CREATE INDEX IF NOT EXISTS idx_issues_status ON issues(status);
+CREATE INDEX IF NOT EXISTS idx_logbook_organization ON logbook_entries(organization_id);
+CREATE INDEX IF NOT EXISTS idx_logbook_type ON logbook_entries(type);
+CREATE INDEX IF NOT EXISTS idx_logbook_created ON logbook_entries(created_at DESC);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -111,8 +111,17 @@ END;
 $$ language 'plpgsql';
 
 -- Add triggers for updated_at
+DROP TRIGGER IF EXISTS update_organizations_updated_at ON organizations;
 CREATE TRIGGER update_organizations_updated_at BEFORE UPDATE ON organizations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_assets_updated_at ON assets;
 CREATE TRIGGER update_assets_updated_at BEFORE UPDATE ON assets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_loans_updated_at ON loans;
 CREATE TRIGGER update_loans_updated_at BEFORE UPDATE ON loans FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_issues_updated_at ON issues;
 CREATE TRIGGER update_issues_updated_at BEFORE UPDATE ON issues FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

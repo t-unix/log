@@ -9,4 +9,4 @@ echo "🌱 Seeding database..."
 npm run seed
 
 echo "🚀 Starting application..."
-exec node dist/index.js
+exec npm start
