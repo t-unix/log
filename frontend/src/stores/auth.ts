@@ -34,6 +34,15 @@ export const useAuthStore = defineStore('auth', () => {
     window.location.href = `/api/auth/${provider}`
   }
 
+  async function loginWithPassword(username: string, password: string) {
+    const response = await axios.post('/api/auth/login', {
+      username,
+      password
+    })
+    const { token: authToken, user: userData } = response.data
+    setAuth(authToken, userData)
+  }
+
   function setAuth(authToken: string, userData: User) {
     token.value = authToken
     user.value = userData
@@ -54,6 +63,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     checkAuth,
     login,
+    loginWithPassword,
     setAuth,
     logout
   }

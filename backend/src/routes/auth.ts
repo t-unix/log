@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import passport from 'passport'
+import bcrypt from 'bcrypt'
 import { authenticateToken, generateToken, AuthRequest } from '../middleware/auth.js'
 import { query } from '../config/database.js'
 
@@ -18,6 +19,64 @@ const isProviderConfigured = (provider: string): boolean => {
       return false
   }
 }
+
+// Username/Password login endpoint
+authRouter.post('/login', async (req, res): Promise<void> => {
+  try {
+    const { username, password } = req.body
+
+    if (!username || !password) {
+      res.status(400).json({ error: 'Username and password are required' })
+      return
+    }
+
+    // Find user by username or email
+    const userResult = await query(
+      'SELECT * FROM users WHERE username = $1 OR email = $1',
+      [username]
+    )
+
+    if (userResult.rows.length === 0) {
+      res.status(401).json({ error: 'Invalid username or password' })
+      return
+    }
+
+    const user = userResult.rows[0]
+
+    // Check if user has a password hash (local auth user)
+    if (!user.password_hash) {
+      res.status(401).json({ error: 'This account uses OAuth authentication' })
+      return
+    }
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password_hash)
+
+    if (!isValidPassword) {
+      res.status(401).json({ error: 'Invalid username or password' })
+      return
+    }
+
+    // Generate JWT token
+    const token = generateToken(user)
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        name: user.name,
+        avatar: user.avatar,
+        role: user.role,
+        organizationId: user.organization_id
+      }
+    })
+  } catch (error) {
+    console.error('Login error:', error)
+    res.status(500).json({ error: 'Failed to login' })
+  }
+})
 
 // Demo/Development login endpoint
 authRouter.post('/demo-login', async (_req, res): Promise<void> => {
