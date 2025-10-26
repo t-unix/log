@@ -10,52 +10,64 @@
           <p class="login-subtitle">Asset Management for Organizations</p>
         </div>
 
-        <div class="login-content">
+        <div v-if="!codeSent" class="login-content">
           <h2 class="login-title">Sign in to continue</h2>
           <p class="login-description">
-            Enter your credentials to access your organization's assets.
+            Enter your email address and we'll send you a verification code
           </p>
 
           <div v-if="error" class="error-message">
             {{ error }}
           </div>
 
-          <form @submit.prevent="handlePasswordLogin" class="login-form">
+          <form @submit.prevent="handleRequestCode" class="login-form">
             <div class="form-group">
-              <label for="username" class="form-label">Username or Email</label>
+              <label for="email" class="form-label">Email address</label>
               <input
-                id="username"
-                v-model="username"
-                type="text"
+                id="email"
+                v-model="email"
+                type="email"
                 class="form-input"
-                placeholder="Enter your username or email"
+                placeholder="you@example.com"
                 required
-                autocomplete="username"
+                :disabled="loading"
+                autocomplete="email"
               />
             </div>
 
-            <div class="form-group">
-              <label for="password" class="form-label">Password</label>
-              <input
-                id="password"
-                v-model="password"
-                type="password"
-                class="form-input"
-                placeholder="Enter your password"
-                required
-                autocomplete="current-password"
-              />
-            </div>
-
-            <button type="submit" class="login-button" :disabled="loading">
+            <button type="submit" class="login-button" :disabled="loading || !email">
               <span v-if="loading" class="spinner"></span>
-              <span v-else>Sign In</span>
+              <span v-else>Send verification code</span>
             </button>
           </form>
 
           <p class="login-footer">
-            By signing in, you agree to our Terms of Service and Privacy Policy.
+            Passwordless authentication - secure and simple. No password required.
           </p>
+        </div>
+
+        <div v-else class="success-content">
+          <div class="success-icon">✉️</div>
+          <h2 class="success-title">Check your email</h2>
+          <p class="success-description">
+            We've sent a verification code to <strong>{{ email }}</strong>
+          </p>
+          <p class="success-hint">
+            You can either enter the 6-digit code or click the magic link in the email.
+          </p>
+          <router-link
+            :to="{ name: 'auth-verify', query: { email } }"
+            class="login-button verify-button"
+          >
+            Enter verification code
+          </router-link>
+          <button
+            @click="handleResendCode"
+            class="resend-button"
+            :disabled="loading"
+          >
+            {{ loading ? 'Sending...' : 'Resend code' }}
+          </button>
         </div>
       </div>
     </div>
@@ -63,71 +75,45 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
-const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
+const authStore = useAuthStore()
 
-const error = ref<string | null>(null)
+const email = ref('')
+const codeSent = ref(false)
 const loading = ref(false)
-const username = ref('')
-const password = ref('')
+const error = ref('')
 
-onMounted(() => {
-  // Check for OAuth errors in query params
-  const errorParam = route.query.error as string
-  if (errorParam) {
-    switch (errorParam) {
-      case 'github_not_configured':
-        error.value = 'GitHub authentication is not configured.'
-        break
-      case 'google_not_configured':
-        error.value = 'Google authentication is not configured.'
-        break
-      case 'apple_not_implemented':
-        error.value = 'Apple authentication is not yet implemented.'
-        break
-      case 'auth_failed':
-        error.value = 'Authentication failed. Please try again.'
-        break
-      default:
-        error.value = 'An error occurred during authentication.'
-    }
-  }
+async function handleRequestCode() {
+  if (!email.value) return
 
-  // Check for token in query params (OAuth callback)
-  const token = route.query.token as string
-  if (token) {
-    const userData = {
-      id: '',
-      email: '',
-      name: '',
-      role: '',
-      organizationId: ''
-    }
-    authStore.setAuth(token, userData)
-    authStore.checkAuth().then(() => {
-      router.push('/')
-    })
-  }
-})
-
-async function handlePasswordLogin() {
   loading.value = true
-  error.value = null
+  error.value = ''
 
   try {
-    await authStore.loginWithPassword(username.value, password.value)
-    router.push('/')
+    await authStore.requestCode(email.value)
+    codeSent.value = true
   } catch (err: any) {
-    console.error('Login error:', err)
-    error.value = err.response?.data?.error || 'Login failed. Please check your credentials and try again.'
+    error.value = err.response?.data?.error || 'Failed to send verification code'
+    console.error('Request code error:', err)
   } finally {
     loading.value = false
   }
+}
+
+async function handleResendCode() {
+  codeSent.value = false
+  await handleRequestCode()
+}
+
+// If already authenticated, redirect to home or intended page
+if (authStore.isAuthenticated) {
+  const redirect = route.query.redirect as string
+  router.push(redirect || '/')
 }
 </script>
 
@@ -233,6 +219,12 @@ async function handlePasswordLogin() {
   color: var(--text-light);
 }
 
+.form-input:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .login-button {
   width: 100%;
   padding: 0.875rem 1.5rem;
@@ -245,6 +237,9 @@ async function handlePasswordLogin() {
   cursor: pointer;
   transition: var(--transition);
   margin-top: 0.5rem;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
 }
 
 .login-button:hover:not(:disabled) {
@@ -293,6 +288,65 @@ async function handlePasswordLogin() {
   to { transform: rotate(360deg); }
 }
 
+/* Success view styles */
+.success-content {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.success-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.success-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.success-description {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.success-hint {
+  font-size: 0.875rem;
+  color: var(--text-light);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.verify-button {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.resend-button {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid var(--primary-color);
+  border-radius: var(--radius-md);
+  background: white;
+  color: var(--primary-color);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.resend-button:hover:not(:disabled) {
+  background-color: #f9fafb;
+}
+
+.resend-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .login-card {
     padding: 2rem 1.5rem;
@@ -304,6 +358,10 @@ async function handlePasswordLogin() {
 
   .login-title {
     font-size: 1.25rem;
+  }
+
+  .success-icon {
+    font-size: 3rem;
   }
 }
 </style>
