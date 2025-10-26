@@ -30,14 +30,8 @@
 
       <div class="navbar-actions desktop-only">
         <RouterLink to="/profile" class="profile-link">
-          <img
-            v-if="authStore.user?.avatar"
-            :src="authStore.user.avatar"
-            :alt="authStore.user.name"
-            class="avatar"
-          >
-          <div v-else class="avatar avatar-placeholder">
-            {{ authStore.user?.name?.charAt(0) || 'U' }}
+          <div class="avatar avatar-placeholder">
+            A
           </div>
         </RouterLink>
       </div>
@@ -71,9 +65,6 @@
 
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
-
-const authStore = useAuthStore()
 </script>
 
 <style scoped>
