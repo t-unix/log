@@ -144,20 +144,25 @@ const loansStore = useLoansStore()
 
 const loading = ref(true)
 
-const stats = computed(() => ({
-  totalAssets: assetsStore.assets.length,
-  available: assetsStore.assets.filter(a => a.status === 'available').length,
-  loaned: assetsStore.assets.filter(a => a.status === 'loaned').length,
-  issues: 0 // Would come from issues store
-}))
+const stats = computed(() => {
+  const assets = assetsStore.assets || []
+  return {
+    totalAssets: assets.length,
+    available: assets.filter(a => a.status === 'available').length,
+    loaned: assets.filter(a => a.status === 'loaned').length,
+    issues: 0 // Would come from issues store
+  }
+})
 
-const recentAssets = computed(() =>
-  assetsStore.assets.slice(0, 5)
-)
+const recentAssets = computed(() => {
+  const assets = assetsStore.assets || []
+  return assets.slice(0, 5)
+})
 
-const activeLoans = computed(() =>
-  loansStore.loans.filter(l => l.status === 'active').slice(0, 5)
-)
+const activeLoans = computed(() => {
+  const loans = loansStore.loans || []
+  return loans.filter(l => l.status === 'active').slice(0, 5)
+})
 
 function getStatusColor(status: string) {
   const colors: Record<string, string> = {

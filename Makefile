@@ -1,4 +1,4 @@
-.PHONY: help install dev build docker-build docker-up docker-down helm-install helm-uninstall clean
+.PHONY: help install dev build docker-build docker-up docker-down test-e2e test-e2e-ui helm-install helm-uninstall clean
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -39,6 +39,18 @@ docker-down: ## Stop Docker containers
 
 docker-logs: ## View Docker logs
 	docker-compose logs -f
+
+test-e2e: ## Run end-to-end tests (headless)
+	@echo "🧪 Running E2E tests..."
+	cd e2e-tests && npm test
+
+test-e2e-ui: ## Run end-to-end tests with UI
+	@echo "🧪 Running E2E tests with UI..."
+	cd e2e-tests && npm run test:ui
+
+test-e2e-setup: ## Install E2E test dependencies
+	@echo "📦 Installing E2E test dependencies..."
+	cd e2e-tests && npm install && npm run install-browsers
 
 helm-install: ## Install Helm chart
 	@echo "☸️  Installing Helm chart..."
