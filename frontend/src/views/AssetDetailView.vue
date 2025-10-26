@@ -108,25 +108,164 @@
           </div>
         </div>
       </div>
+
+      <!-- Loan Modal -->
+      <div v-if="showLoanModal" class="modal-overlay" @click="showLoanModal = false">
+        <div class="modal-content card" @click.stop>
+          <div class="modal-header">
+            <h2 class="modal-title">Loan Asset</h2>
+            <button @click="showLoanModal = false" class="modal-close">✕</button>
+          </div>
+          <form @submit.prevent="handleLoan" class="modal-form">
+            <div class="form-group">
+              <label class="form-label">Expected Return Date</label>
+              <input
+                v-model="loanForm.expectedReturnDate"
+                type="date"
+                class="form-input"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notes</label>
+              <textarea
+                v-model="loanForm.notes"
+                class="form-input"
+                rows="3"
+                placeholder="Add any notes about this loan..."
+              ></textarea>
+            </div>
+            <div class="modal-actions">
+              <button type="button" @click="showLoanModal = false" class="btn btn-secondary">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary">
+                Confirm Loan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Edit Modal -->
+      <div v-if="showEditModal" class="modal-overlay" @click="showEditModal = false">
+        <div class="modal-content card" @click.stop>
+          <div class="modal-header">
+            <h2 class="modal-title">Edit Asset</h2>
+            <button @click="showEditModal = false" class="modal-close">✕</button>
+          </div>
+          <form @submit.prevent="handleEdit" class="modal-form">
+            <div class="form-group">
+              <label class="form-label">Name *</label>
+              <input
+                v-model="editForm.name"
+                type="text"
+                class="form-input"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Category *</label>
+              <input
+                v-model="editForm.category"
+                type="text"
+                class="form-input"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <textarea
+                v-model="editForm.description"
+                class="form-input"
+                rows="3"
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Serial Number</label>
+              <input
+                v-model="editForm.serialNumber"
+                type="text"
+                class="form-input"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Purchase Date</label>
+              <input
+                v-model="editForm.purchaseDate"
+                type="date"
+                class="form-input"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select v-model="editForm.status" class="form-input">
+                <option value="available">Available</option>
+                <option value="loaned">Loaned</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="retired">Retired</option>
+              </select>
+            </div>
+            <div class="modal-actions">
+              <button type="button" @click="showEditModal = false" class="btn btn-secondary">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary">
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAssetsStore } from '../stores/assets'
+import { useLoansStore } from '../stores/loans'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
 const assetsStore = useAssetsStore()
+const loansStore = useLoansStore()
 
 const showPhotoModal = ref(false)
 const showEditModal = ref(false)
 const showLoanModal = ref(false)
 const photoInput = ref<HTMLInputElement>()
 
+const loanForm = ref({
+  expectedReturnDate: '',
+  notes: ''
+})
+
+const editForm = ref({
+  name: '',
+  category: '',
+  description: '',
+  serialNumber: '',
+  purchaseDate: '',
+  status: 'available' as 'available' | 'loaned' | 'maintenance' | 'retired'
+})
+
 const asset = computed(() => assetsStore.currentAsset)
+
+// Populate edit form when asset loads
+watch(asset, (newAsset) => {
+  if (newAsset) {
+    editForm.value = {
+      name: newAsset.name,
+      category: newAsset.category,
+      description: newAsset.description || '',
+      serialNumber: newAsset.serialNumber || '',
+      purchaseDate: newAsset.purchaseDate || '',
+      status: newAsset.status
+    }
+  }
+}, { immediate: true })
 
 function getStatusColor(status: string) {
   const colors: Record<string, string> = {
@@ -168,6 +307,46 @@ async function handlePhotoUpload(event: Event) {
     showPhotoModal.value = false
   }
   reader.readAsDataURL(file)
+}
+
+async function handleLoan() {
+  if (!asset.value) return
+
+  try {
+    await axios.post('/api/loans', {
+      assetId: asset.value.id,
+      expectedReturnDate: loanForm.value.expectedReturnDate || undefined,
+      notes: loanForm.value.notes || undefined
+    })
+
+    // Refresh asset to show updated status
+    await assetsStore.fetchAsset(asset.value.id)
+
+    // Reset form and close modal
+    loanForm.value = {
+      expectedReturnDate: '',
+      notes: ''
+    }
+    showLoanModal.value = false
+
+    alert('Asset loaned successfully!')
+  } catch (error: any) {
+    console.error('Failed to create loan:', error)
+    alert(error.response?.data?.error || 'Failed to create loan')
+  }
+}
+
+async function handleEdit() {
+  if (!asset.value) return
+
+  try {
+    await assetsStore.updateAsset(asset.value.id, editForm.value)
+    showEditModal.value = false
+    alert('Asset updated successfully!')
+  } catch (error) {
+    console.error('Failed to update asset:', error)
+    alert('Failed to update asset')
+  }
 }
 
 async function handleDelete() {

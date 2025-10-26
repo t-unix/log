@@ -134,78 +134,81 @@ authRouter.post('/demo-login', async (_req, res): Promise<void> => {
   }
 })
 
-// GitHub OAuth
-authRouter.get('/github', (req, res, next): void => {
-  if (!isProviderConfigured('github')) {
-    res.status(503).json({
-      error: 'GitHub authentication is not configured',
-      hint: 'Please set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables'
-    })
-    return
-  }
-  passport.authenticate('github', { scope: ['user:email'] })(req, res, next)
-})
+// OAuth routes disabled - authentication is currently disabled for easier testing
+// Uncomment these when you want to re-enable OAuth authentication
 
-authRouter.get('/github/callback', (req, res, next): void => {
-  if (!isProviderConfigured('github')) {
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=github_not_configured`)
-    return
-  }
+// // GitHub OAuth
+// authRouter.get('/github', (req, res, next): void => {
+//   if (!isProviderConfigured('github')) {
+//     res.status(503).json({
+//       error: 'GitHub authentication is not configured',
+//       hint: 'Please set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables'
+//     })
+//     return
+//   }
+//   passport.authenticate('github', { scope: ['user:email'] })(req, res, next)
+// })
 
-  passport.authenticate('github', { failureRedirect: '/login' }, (err: any, user: any) => {
-    if (err || !user) {
-      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`)
-      return
-    }
-    const token = generateToken(user)
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}?token=${token}`)
-  })(req, res, next)
-})
+// authRouter.get('/github/callback', (req, res, next): void => {
+//   if (!isProviderConfigured('github')) {
+//     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=github_not_configured`)
+//     return
+//   }
+//
+//   passport.authenticate('github', { failureRedirect: '/login' }, (err: any, user: any) => {
+//     if (err || !user) {
+//       res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`)
+//       return
+//     }
+//     const token = generateToken(user)
+//     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}?token=${token}`)
+//   })(req, res, next)
+// })
 
-// Google OAuth
-authRouter.get('/google', (req, res, next): void => {
-  if (!isProviderConfigured('google')) {
-    res.status(503).json({
-      error: 'Google authentication is not configured',
-      hint: 'Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables'
-    })
-    return
-  }
-  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next)
-})
+// // Google OAuth
+// authRouter.get('/google', (req, res, next): void => {
+//   if (!isProviderConfigured('google')) {
+//     res.status(503).json({
+//       error: 'Google authentication is not configured',
+//       hint: 'Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables'
+//     })
+//     return
+//   }
+//   passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next)
+// })
 
-authRouter.get('/google/callback', (req, res, next): void => {
-  if (!isProviderConfigured('google')) {
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=google_not_configured`)
-    return
-  }
+// authRouter.get('/google/callback', (req, res, next): void => {
+//   if (!isProviderConfigured('google')) {
+//     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=google_not_configured`)
+//     return
+//   }
+//
+//   passport.authenticate('google', { failureRedirect: '/login' }, (err: any, user: any) => {
+//     if (err || !user) {
+//       res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`)
+//       return
+//     }
+//     const token = generateToken(user)
+//     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}?token=${token}`)
+//   })(req, res, next)
+// })
 
-  passport.authenticate('google', { failureRedirect: '/login' }, (err: any, user: any) => {
-    if (err || !user) {
-      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`)
-      return
-    }
-    const token = generateToken(user)
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}?token=${token}`)
-  })(req, res, next)
-})
+// // Apple OAuth
+// authRouter.get('/apple', (_req, res, _next): void => {
+//   if (!isProviderConfigured('apple')) {
+//     res.status(503).json({
+//       error: 'Apple authentication is not configured',
+//       hint: 'Please set APPLE_CLIENT_ID and APPLE_CLIENT_SECRET environment variables'
+//     })
+//     return
+//   }
+//   // Apple strategy would be used here if configured
+//   res.status(503).json({ error: 'Apple authentication is configured but strategy needs implementation' })
+// })
 
-// Apple OAuth
-authRouter.get('/apple', (_req, res, _next): void => {
-  if (!isProviderConfigured('apple')) {
-    res.status(503).json({
-      error: 'Apple authentication is not configured',
-      hint: 'Please set APPLE_CLIENT_ID and APPLE_CLIENT_SECRET environment variables'
-    })
-    return
-  }
-  // Apple strategy would be used here if configured
-  res.status(503).json({ error: 'Apple authentication is configured but strategy needs implementation' })
-})
-
-authRouter.get('/apple/callback', (_req, res): void => {
-  res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=apple_not_implemented`)
-})
+// authRouter.get('/apple/callback', (_req, res): void => {
+//   res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=apple_not_implemented`)
+// })
 
 // Get current user
 authRouter.get('/me', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
