@@ -42,6 +42,8 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       APPLE_CLIENT_ID: ${APPLE_CLIENT_ID}
       APPLE_CLIENT_SECRET: ${APPLE_CLIENT_SECRET}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL}
     ports:
       - "3001:3001"
     depends_on:
@@ -50,6 +52,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - uploads-data:/app/uploads
     networks:
       - log-network
     restart: unless-stopped
@@ -72,6 +75,8 @@ services:
 
 volumes:
   postgres-data:
+    driver: local
+  uploads-data:
     driver: local
 
 networks:

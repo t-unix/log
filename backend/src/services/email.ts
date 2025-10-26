@@ -79,34 +79,41 @@ If you didn't request this code, you can safely ignore this email.
 © 2025 Log Asset Management
   `
 
-  // In development or if Resend is not configured, log to console
-  if (!resend || process.env.NODE_ENV === 'development') {
-    console.log('\n📧 =============== AUTH EMAIL ===============')
+  // If Resend is not configured, log to console only
+  if (!resend) {
+    console.log('\n📧 =============== AUTH EMAIL (NO RESEND) ===============')
     console.log(`To: ${to}`)
     console.log(`Code: ${code}`)
     console.log(`Magic Link: ${magicLink}`)
-    console.log('============================================\n')
+    console.log('=======================================================\n')
     return
   }
 
-  // In production with Resend configured
+  // Send email via Resend (works in both development and production)
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: FROM_EMAIL,
       to,
       subject: `Your login code: ${code}`,
       html: htmlContent,
       text: textContent
     })
-    console.log(`✅ Auth email sent to ${to}`)
-  } catch (error) {
-    console.error('Failed to send email via Resend:', error)
+    console.log(`✅ Auth email sent to ${to} (ID: ${result.data?.id})`)
+  } catch (error: any) {
+    console.error('❌ Failed to send email via Resend:', error.message || error)
+    if (error.statusCode) {
+      console.error(`   Status: ${error.statusCode}`)
+    }
+    if (error.name) {
+      console.error(`   Error type: ${error.name}`)
+    }
     // Fallback to console logging if email fails
     console.log('\n📧 =============== AUTH EMAIL (FALLBACK) ===============')
     console.log(`To: ${to}`)
     console.log(`Code: ${code}`)
     console.log(`Magic Link: ${magicLink}`)
     console.log('========================================================\n')
+    throw error // Re-throw so the caller knows it failed
   }
 }
 

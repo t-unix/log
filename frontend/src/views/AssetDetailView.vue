@@ -297,16 +297,34 @@ async function handlePhotoUpload(event: Event) {
   const file = target.files?.[0]
   if (!file || !asset.value) return
 
-  // In a real app, upload to server and get URL
-  const reader = new FileReader()
-  reader.onload = async (e) => {
-    const photoUrl = e.target?.result as string
+  try {
+    // Create form data for file upload
+    const formData = new FormData()
+    formData.append('file', file)
+
+    // Upload file to server
+    const response = await axios.post('/api/uploads', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+
+    // Get the uploaded file URL
+    const photoUrl = response.data.url
+
+    // Update asset with new photo URL
     await assetsStore.updateAsset(asset.value!.id, {
       photos: [...(asset.value!.photos || []), photoUrl]
     })
+
     showPhotoModal.value = false
+
+    // Clear the input
+    if (target) target.value = ''
+  } catch (error: any) {
+    console.error('Photo upload error:', error)
+    alert(error.response?.data?.error || 'Failed to upload photo')
   }
-  reader.readAsDataURL(file)
 }
 
 async function handleLoan() {
