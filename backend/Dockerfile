@@ -26,9 +26,8 @@ COPY package*.json ./
 # Install all dependencies (needed for tsx to run migrations/seeds)
 RUN npm install
 
-# Copy built application
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/src/db ./src/db
+# Copy source code (needed to run with tsx)
+COPY --from=build /app/src ./src
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/

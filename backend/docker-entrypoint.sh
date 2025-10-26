@@ -9,4 +9,4 @@ echo "🌱 Seeding database..."
 npm run seed
 
 echo "🚀 Starting application..."
-exec npm start
+exec npx tsx src/index.ts
