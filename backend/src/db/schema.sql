@@ -26,6 +26,17 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE(provider, provider_id)
 );
 
+-- Auth tokens table (for magic links and OTP codes)
+CREATE TABLE IF NOT EXISTS auth_tokens (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email VARCHAR(255) NOT NULL,
+  code VARCHAR(10) NOT NULL,
+  token VARCHAR(255) UNIQUE NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  used_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Assets table
 CREATE TABLE IF NOT EXISTS assets (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -88,6 +99,9 @@ CREATE TABLE IF NOT EXISTS logbook_entries (
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_users_organization ON users(organization_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_auth_tokens_email ON auth_tokens(email);
+CREATE INDEX IF NOT EXISTS idx_auth_tokens_token ON auth_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_auth_tokens_expires ON auth_tokens(expires_at);
 CREATE INDEX IF NOT EXISTS idx_assets_organization ON assets(organization_id);
 CREATE INDEX IF NOT EXISTS idx_assets_status ON assets(status);
 CREATE INDEX IF NOT EXISTS idx_loans_organization ON loans(organization_id);

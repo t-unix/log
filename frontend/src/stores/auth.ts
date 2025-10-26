@@ -15,30 +15,39 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const token = ref<string | null>(localStorage.getItem('token'))
 
-  const isAuthenticated = computed(() => !!token.value && !!user.value)
+  const isAuthenticated = computed(() => !!token.value)
+
+  // Set authorization header if token exists on store initialization
+  if (token.value) {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
+  }
 
   async function checkAuth() {
-    if (!token.value) return
+    if (!token.value) return false
 
     try {
-      const response = await axios.get('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token.value}` }
-      })
+      const response = await axios.get('/api/auth/me')
       user.value = response.data
+      return true
     } catch (error) {
       logout()
+      return false
     }
   }
 
-  async function login(provider: string) {
-    window.location.href = `/api/auth/${provider}`
+  async function requestCode(email: string) {
+    const response = await axios.post('/api/auth/request-code', { email })
+    return response.data
   }
 
-  async function loginWithPassword(username: string, password: string) {
-    const response = await axios.post('/api/auth/login', {
-      username,
-      password
-    })
+  async function verifyCode(email: string, code: string) {
+    const response = await axios.post('/api/auth/verify-code', { email, code })
+    const { token: authToken, user: userData } = response.data
+    setAuth(authToken, userData)
+  }
+
+  async function verifyMagicLink(tokenParam: string) {
+    const response = await axios.get(`/api/auth/verify-link?token=${tokenParam}`)
     const { token: authToken, user: userData } = response.data
     setAuth(authToken, userData)
   }
@@ -62,8 +71,9 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     isAuthenticated,
     checkAuth,
-    login,
-    loginWithPassword,
+    requestCode,
+    verifyCode,
+    verifyMagicLink,
     setAuth,
     logout
   }
