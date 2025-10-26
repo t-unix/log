@@ -25,9 +25,10 @@ export const useLoansStore = defineStore('loans', () => {
     error.value = null
     try {
       const response = await axios.get('/api/loans')
-      loans.value = response.data
+      loans.value = Array.isArray(response.data) ? response.data : []
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch loans'
+      loans.value = []
     } finally {
       loading.value = false
     }

@@ -27,9 +27,10 @@ export const useAssetsStore = defineStore('assets', () => {
     error.value = null
     try {
       const response = await axios.get('/api/assets')
-      assets.value = response.data
+      assets.value = Array.isArray(response.data) ? response.data : []
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch assets'
+      assets.value = []
     } finally {
       loading.value = false
     }

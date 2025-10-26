@@ -145,7 +145,7 @@ const loansStore = useLoansStore()
 const loading = ref(true)
 
 const stats = computed(() => {
-  const assets = assetsStore.assets || []
+  const assets = Array.isArray(assetsStore.assets) ? assetsStore.assets : []
   return {
     totalAssets: assets.length,
     available: assets.filter(a => a.status === 'available').length,
@@ -155,12 +155,12 @@ const stats = computed(() => {
 })
 
 const recentAssets = computed(() => {
-  const assets = assetsStore.assets || []
+  const assets = Array.isArray(assetsStore.assets) ? assetsStore.assets : []
   return assets.slice(0, 5)
 })
 
 const activeLoans = computed(() => {
-  const loans = loansStore.loans || []
+  const loans = Array.isArray(loansStore.loans) ? loansStore.loans : []
   return loans.filter(l => l.status === 'active').slice(0, 5)
 })
 
